@@ -24,13 +24,13 @@ To build and run the application, navigate to the project root directory and exe
 ./mvnw spring-boot:run
 ```
 
-The application will start on `http://localhost:8080`.
+The application will start on `http://localhost:8081`.
 
 ### API Documentation (Swagger UI)
 
 Once the application is running, you can access the API documentation via Swagger UI at:
 
-[http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+[http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
 
 ### H2 Console
 
