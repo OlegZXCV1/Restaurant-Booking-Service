@@ -14,14 +14,14 @@ This is a Spring Boot application for managing restaurant bookings.
 ### Prerequisites
 
 - Java 17 or higher
-- Gradle
+- Maven
 
 ### Running the application
 
 To build and run the application, navigate to the project root directory and execute the following command:
 
 ```bash
-./gradlew bootRun
+./mvnw spring-boot:run
 ```
 
 The application will start on `http://localhost:8080`.
