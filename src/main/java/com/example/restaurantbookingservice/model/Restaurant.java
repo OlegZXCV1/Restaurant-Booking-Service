@@ -4,8 +4,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import java.util.List;
 
 @Entity
 public class Restaurant {
@@ -17,9 +15,6 @@ public class Restaurant {
     private String address;
     private String phone;
     private String email;
-
-    @OneToMany(mappedBy = "restaurant")
-    private List<RestaurantTable> tables;
 
     public Restaurant() {
     }
@@ -69,13 +64,5 @@ public class Restaurant {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public List<RestaurantTable> getTables() {
-        return tables;
-    }
-
-    public void setTables(List<RestaurantTable> tables) {
-        this.tables = tables;
     }
 }

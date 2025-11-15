@@ -3,7 +3,6 @@ package com.example.restaurantbookingservice.controller;
 import com.example.restaurantbookingservice.model.Booking;
 import com.example.restaurantbookingservice.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,18 +24,14 @@ public class BookingController {
         return bookingService.getBookingById(id);
     }
 
-    @GetMapping("/timeslot/{timeSlotId}")
-    public List<Booking> getBookingsByTimeSlotId(@PathVariable Long timeSlotId) {
-        return bookingService.getBookingsByTimeSlotId(timeSlotId);
+    @GetMapping("/restaurant/{restaurantId}")
+    public List<Booking> getBookingsByRestaurantId(@PathVariable Long restaurantId) {
+        return bookingService.getBookingsByRestaurantId(restaurantId);
     }
 
     @PostMapping
-    public ResponseEntity<Booking> addBooking(@RequestBody Booking booking) {
-        Booking newBooking = bookingService.addBooking(booking);
-        if (newBooking != null) {
-            return ResponseEntity.ok(newBooking);
-        }
-        return ResponseEntity.badRequest().build();
+    public Booking addBooking(@RequestBody Booking booking) {
+        return bookingService.addBooking(booking);
     }
 
     @DeleteMapping("/{id}")
