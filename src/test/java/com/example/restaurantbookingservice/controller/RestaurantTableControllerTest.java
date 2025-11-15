@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -86,7 +87,7 @@ public class RestaurantTableControllerTest {
 
         when(restaurantTableService.addTable(any(RestaurantTable.class))).thenReturn(table);
 
-        mockMvc.perform(post("/tables")
+        mockMvc.perform(post("/tables").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"tableNumber\": 1, \"capacity\": 4, \"restaurant\": {\"id\": 1}}"))
                 .andExpect(status().isOk())
@@ -96,7 +97,7 @@ public class RestaurantTableControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     public void testDeleteTable() throws Exception {
-        mockMvc.perform(delete("/tables/1"))
+        mockMvc.perform(delete("/tables/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }

@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,7 +65,7 @@ class RestaurantControllerTest {
         Restaurant restaurant = new Restaurant("Restaurant 1", "Address 1", "1234567890", "r1@email.com");
         when(restaurantService.addRestaurant(restaurant)).thenReturn(restaurant);
 
-        mockMvc.perform(post("/restaurants")
+        mockMvc.perform(post("/restaurants").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(restaurant)))
                 .andExpect(status().isOk());
@@ -73,7 +74,7 @@ class RestaurantControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void deleteRestaurant() throws Exception {
-        mockMvc.perform(delete("/restaurants/1"))
+        mockMvc.perform(delete("/restaurants/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }

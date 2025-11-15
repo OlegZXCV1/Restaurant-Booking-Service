@@ -18,6 +18,9 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -88,7 +91,7 @@ public class TimeSlotControllerTest {
 
         when(timeSlotService.addTimeSlot(any(TimeSlot.class))).thenReturn(timeSlot);
 
-        mockMvc.perform(post("/timeslots")
+        mockMvc.perform(post("/timeslots").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"startTime\": \"2025-11-15T10:00:00\", \"endTime\": \"2025-11-15T12:00:00\", \"restaurantTable\": {\"id\": 1}}"))
                 .andExpect(status().isOk())
@@ -98,7 +101,7 @@ public class TimeSlotControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     public void testDeleteTimeSlot() throws Exception {
-        mockMvc.perform(delete("/timeslots/1"))
+        mockMvc.perform(delete("/timeslots/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }

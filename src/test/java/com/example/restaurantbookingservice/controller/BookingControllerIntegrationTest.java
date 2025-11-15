@@ -9,6 +9,7 @@ import com.example.restaurantbookingservice.model.TimeSlot;
 import com.example.restaurantbookingservice.model.User;
 import com.example.restaurantbookingservice.repository.RoleRepository;
 import com.example.restaurantbookingservice.repository.UserRepository;
+import com.example.restaurantbookingservice.security.services.UserDetailsImpl;
 import com.example.restaurantbookingservice.service.RestaurantService;
 import com.example.restaurantbookingservice.service.RestaurantTableService;
 import com.example.restaurantbookingservice.service.TimeSlotService;
@@ -86,7 +87,7 @@ public class BookingControllerIntegrationTest {
     private Booking createBooking(TimeSlot timeSlot, User user, int numberOfPeople, String customerName, String customerPhone, String customerEmail) throws Exception {
         Booking booking = new Booking(timeSlot, user, numberOfPeople, customerName, customerPhone, customerEmail);
         String responseString = mockMvc.perform(post("/bookings")
-                        .with(user(user.getUsername()).roles(user.getRoles().iterator().next().getName().name()))
+                        .with(user(UserDetailsImpl.build(user)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booking)))
                 .andExpect(status().isOk())
@@ -104,7 +105,7 @@ public class BookingControllerIntegrationTest {
         timeSlotService.addTimeSlot(timeSlot);
         createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
 
-        mockMvc.perform(get("/bookings").with(user(adminUser.getUsername()).roles("ADMIN")))
+        mockMvc.perform(get("/bookings").with(user(UserDetailsImpl.build(adminUser))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].customerName").value("Customer 1"));
@@ -120,7 +121,7 @@ public class BookingControllerIntegrationTest {
         timeSlotService.addTimeSlot(timeSlot);
         Booking savedBooking = createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
 
-        mockMvc.perform(get("/bookings/" + savedBooking.getId()).with(user(testUser.getUsername()).roles("USER")))
+        mockMvc.perform(get("/bookings/" + savedBooking.getId()).with(user(UserDetailsImpl.build(testUser))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.customerName").value("Customer 1"));
     }
@@ -136,7 +137,7 @@ public class BookingControllerIntegrationTest {
         Booking booking = new Booking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
 
         mockMvc.perform(post("/bookings")
-                        .with(user(testUser.getUsername()).roles("USER"))
+                        .with(user(UserDetailsImpl.build(testUser)))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booking)))
                 .andExpect(status().isOk())
@@ -153,7 +154,7 @@ public class BookingControllerIntegrationTest {
         timeSlotService.addTimeSlot(timeSlot);
         Booking savedBooking = createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
 
-        mockMvc.perform(delete("/bookings/" + savedBooking.getId()).with(user(testUser.getUsername()).roles("USER")))
+        mockMvc.perform(delete("/bookings/" + savedBooking.getId()).with(user(UserDetailsImpl.build(testUser))))
                 .andExpect(status().isOk());
     }
 }

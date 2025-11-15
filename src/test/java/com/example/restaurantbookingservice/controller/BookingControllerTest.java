@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -106,7 +107,7 @@ class BookingControllerTest {
         Booking booking = new Booking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
         when(bookingService.addBooking(any(Booking.class))).thenReturn(booking);
 
-        mockMvc.perform(post("/bookings")
+        mockMvc.perform(post("/bookings").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booking)))
                 .andExpect(status().isOk());
@@ -121,7 +122,7 @@ class BookingControllerTest {
         Booking booking = new Booking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
         when(bookingService.addBooking(any(Booking.class))).thenReturn(null);
 
-        mockMvc.perform(post("/bookings")
+        mockMvc.perform(post("/bookings").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booking)))
                 .andExpect(status().isBadRequest());
@@ -130,7 +131,7 @@ class BookingControllerTest {
     @Test
     @WithMockUser(roles = {"USER", "ADMIN"})
     void deleteBooking() throws Exception {
-        mockMvc.perform(delete("/bookings/1"))
+        mockMvc.perform(delete("/bookings/1").with(csrf()))
                 .andExpect(status().isOk());
     }
 }
