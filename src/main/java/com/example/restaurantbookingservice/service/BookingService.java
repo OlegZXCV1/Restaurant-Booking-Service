@@ -21,12 +21,16 @@ public class BookingService {
         return bookingRepository.findById(id).orElse(null);
     }
 
-    public List<Booking> getBookingsByRestaurantId(Long restaurantId) {
-        return bookingRepository.findByRestaurantId(restaurantId);
+    public List<Booking> getBookingsByTimeSlotId(Long timeSlotId) {
+        return bookingRepository.findByTimeSlotId(timeSlotId);
     }
 
     public Booking addBooking(Booking booking) {
-        return bookingRepository.save(booking);
+        List<Booking> bookings = bookingRepository.findByTimeSlotId(booking.getTimeSlot().getId());
+        if (bookings.isEmpty()) {
+            return bookingRepository.save(booking);
+        }
+        return null;
     }
 
     public void deleteBooking(Long id) {

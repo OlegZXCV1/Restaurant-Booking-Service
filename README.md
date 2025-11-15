@@ -30,13 +30,13 @@ The application will start on `http://localhost:8080`.
 
 Once the application is running, you can access the API documentation via Swagger UI at:
 
-[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+[http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
 
 ### H2 Console
 
 The H2 in-memory database console can be accessed at:
 
-[http://localhost:8080/h2-console](http://localhost:8080/h2-console)
+[http://localhost:8081/h2-console](http://localhost:8080/h2-console)
 
 Use the following credentials:
 - **JDBC URL:** `jdbc:h2:mem:testdb`

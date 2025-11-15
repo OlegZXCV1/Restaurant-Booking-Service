@@ -1,6 +1,9 @@
 package com.example.restaurantbookingservice.controller;
 
 import com.example.restaurantbookingservice.model.Booking;
+import com.example.restaurantbookingservice.model.Restaurant;
+import com.example.restaurantbookingservice.model.RestaurantTable;
+import com.example.restaurantbookingservice.model.TimeSlot;
 import com.example.restaurantbookingservice.service.BookingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,8 +37,11 @@ class BookingControllerTest {
 
     @Test
     void getAllBookings() throws Exception {
-        Booking booking1 = new Booking(1L, LocalDateTime.now(), 2, "Customer 1", "1234567890", "c1@email.com");
-        Booking booking2 = new Booking(2L, LocalDateTime.now(), 4, "Customer 2", "0987654321", "c2@email.com");
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        Booking booking1 = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        Booking booking2 = new Booking(timeSlot, 4, "Customer 2", "0987654321", "c2@email.com");
         List<Booking> bookings = Arrays.asList(booking1, booking2);
 
         when(bookingService.getAllBookings()).thenReturn(bookings);
@@ -48,7 +55,11 @@ class BookingControllerTest {
 
     @Test
     void getBookingById() throws Exception {
-        Booking booking = new Booking(1L, LocalDateTime.now(), 2, "Customer 1", "1234567890", "c1@email.com");
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        booking.setId(1L);
         when(bookingService.getBookingById(1L)).thenReturn(booking);
 
         mockMvc.perform(get("/bookings/1"))
@@ -57,27 +68,48 @@ class BookingControllerTest {
     }
 
     @Test
-    void getBookingsByRestaurantId() throws Exception {
-        Booking booking1 = new Booking(1L, LocalDateTime.now(), 2, "Customer 1", "1234567890", "c1@email.com");
-        Booking booking2 = new Booking(1L, LocalDateTime.now(), 4, "Customer 2", "0987654321", "c2@email.com");
+    void getBookingsByTimeSlotId() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        timeSlot.setId(1L);
+        Booking booking1 = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        Booking booking2 = new Booking(timeSlot, 4, "Customer 2", "0987654321", "c2@email.com");
         List<Booking> bookings = Arrays.asList(booking1, booking2);
 
-        when(bookingService.getBookingsByRestaurantId(1L)).thenReturn(bookings);
+        when(bookingService.getBookingsByTimeSlotId(1L)).thenReturn(bookings);
 
-        mockMvc.perform(get("/bookings/restaurant/1"))
+        mockMvc.perform(get("/bookings/timeslot/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(2));
     }
 
     @Test
     void addBooking() throws Exception {
-        Booking booking = new Booking(1L, LocalDateTime.now(), 2, "Customer 1", "1234567890", "c1@email.com");
-        when(bookingService.addBooking(booking)).thenReturn(booking);
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        when(bookingService.addBooking(any(Booking.class))).thenReturn(booking);
 
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(booking)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void addBooking_whenTimeSlotIsTaken() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        when(bookingService.addBooking(any(Booking.class))).thenReturn(null);
+
+        mockMvc.perform(post("/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(booking)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -1,10 +1,12 @@
 package com.example.restaurantbookingservice.model;
 
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 public class Booking {
@@ -12,8 +14,11 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private Long restaurantId;
-    private LocalDateTime bookingTime;
+
+    @ManyToOne
+    @JoinColumn(name = "timeslot_id")
+    private TimeSlot timeSlot;
+
     private int numberOfPeople;
     private String customerName;
     private String customerPhone;
@@ -22,9 +27,8 @@ public class Booking {
     public Booking() {
     }
 
-    public Booking(Long restaurantId, LocalDateTime bookingTime, int numberOfPeople, String customerName, String customerPhone, String customerEmail) {
-        this.restaurantId = restaurantId;
-        this.bookingTime = bookingTime;
+    public Booking(TimeSlot timeSlot, int numberOfPeople, String customerName, String customerPhone, String customerEmail) {
+        this.timeSlot = timeSlot;
         this.numberOfPeople = numberOfPeople;
         this.customerName = customerName;
         this.customerPhone = customerPhone;
@@ -39,20 +43,12 @@ public class Booking {
         this.id = id;
     }
 
-    public Long getRestaurantId() {
-        return restaurantId;
+    public TimeSlot getTimeSlot() {
+        return timeSlot;
     }
 
-    public void setRestaurantId(Long restaurantId) {
-        this.restaurantId = restaurantId;
-    }
-
-    public LocalDateTime getBookingTime() {
-        return bookingTime;
-    }
-
-    public void setBookingTime(LocalDateTime bookingTime) {
-        this.bookingTime = bookingTime;
+    public void setTimeSlot(TimeSlot timeSlot) {
+        this.timeSlot = timeSlot;
     }
 
     public int getNumberOfPeople() {
