@@ -1,17 +1,14 @@
 package com.example.restaurantbookingservice.controller;
 
-import com.example.restaurantbookingservice.model.Booking;
 import com.example.restaurantbookingservice.model.ERole;
 import com.example.restaurantbookingservice.model.Restaurant;
 import com.example.restaurantbookingservice.model.RestaurantTable;
 import com.example.restaurantbookingservice.model.Role;
-import com.example.restaurantbookingservice.model.TimeSlot;
 import com.example.restaurantbookingservice.model.User;
 import com.example.restaurantbookingservice.repository.RoleRepository;
 import com.example.restaurantbookingservice.repository.UserRepository;
 import com.example.restaurantbookingservice.service.RestaurantService;
 import com.example.restaurantbookingservice.service.RestaurantTableService;
-import com.example.restaurantbookingservice.service.TimeSlotService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +21,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -35,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class BookingControllerIntegrationTest {
+public class RestaurantTableControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,13 +40,10 @@ public class BookingControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private RestaurantService restaurantService;
-
-    @Autowired
     private RestaurantTableService restaurantTableService;
 
     @Autowired
-    private TimeSlotService timeSlotService;
+    private RestaurantService restaurantService;
 
     @Autowired
     private UserRepository userRepository;
@@ -83,77 +76,66 @@ public class BookingControllerIntegrationTest {
         userRepository.save(adminUser);
     }
 
-    private Booking createBooking(TimeSlot timeSlot, User user, int numberOfPeople, String customerName, String customerPhone, String customerEmail) throws Exception {
-        Booking booking = new Booking(timeSlot, user, numberOfPeople, customerName, customerPhone, customerEmail);
-        String responseString = mockMvc.perform(post("/bookings")
-                        .with(user(user.getUsername()).roles(user.getRoles().iterator().next().getName().name()))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(booking)))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(responseString, Booking.class);
-    }
-
     @Test
-    public void testGetAllBookings() throws Exception {
+    public void testGetAllTables() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurantService.addRestaurant(restaurant);
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
         restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
 
-        mockMvc.perform(get("/bookings").with(user(adminUser.getUsername()).roles("ADMIN")))
+        mockMvc.perform(get("/tables").with(user(testUser.getUsername()).roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].customerName").value("Customer 1"));
+                .andExpect(jsonPath("$[0].tableNumber").value(1));
     }
 
     @Test
-    public void testGetBookingById() throws Exception {
+    public void testGetTableById() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurantService.addRestaurant(restaurant);
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
-        restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        Booking savedBooking = createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
+        RestaurantTable savedTable = restaurantTableService.addTable(table);
 
-        mockMvc.perform(get("/bookings/" + savedBooking.getId()).with(user(testUser.getUsername()).roles("USER")))
+        mockMvc.perform(get("/tables/" + savedTable.getId()).with(user(testUser.getUsername()).roles("USER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerName").value("Customer 1"));
+                .andExpect(jsonPath("$.tableNumber").value(1));
     }
 
     @Test
-    public void testAddBooking() throws Exception {
+    public void testGetTablesByRestaurantId() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurantService.addRestaurant(restaurant);
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
         restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        Booking booking = new Booking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
 
-        mockMvc.perform(post("/bookings")
-                        .with(user(testUser.getUsername()).roles("USER"))
+        mockMvc.perform(get("/tables/restaurant/" + restaurant.getId()).with(user(testUser.getUsername()).roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].tableNumber").value(1));
+    }
+
+    @Test
+    public void testAddTable() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        restaurantService.addRestaurant(restaurant);
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+
+        mockMvc.perform(post("/tables")
+                        .with(user(adminUser.getUsername()).roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(booking)))
+                        .content(objectMapper.writeValueAsString(table)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerName").value("Customer 1"));
+                .andExpect(jsonPath("$.tableNumber").value(1));
     }
 
     @Test
-    public void testDeleteBooking() throws Exception {
+    public void testDeleteTable() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurantService.addRestaurant(restaurant);
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
-        restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        Booking savedBooking = createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
+        RestaurantTable savedTable = restaurantTableService.addTable(table);
 
-        mockMvc.perform(delete("/bookings/" + savedBooking.getId()).with(user(testUser.getUsername()).roles("USER")))
+        mockMvc.perform(delete("/tables/" + savedTable.getId()).with(user(adminUser.getUsername()).roles("ADMIN")))
                 .andExpect(status().isOk());
     }
 }

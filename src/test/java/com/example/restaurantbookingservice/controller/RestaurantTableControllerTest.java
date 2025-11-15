@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -28,6 +29,7 @@ public class RestaurantTableControllerTest {
     private RestaurantTableService restaurantTableService;
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     public void testGetAllTables() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table1 = new RestaurantTable(1, 4, restaurant);
@@ -44,6 +46,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     public void testGetTableById() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -57,6 +60,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     public void testGetTablesByRestaurantId() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurant.setId(1L);
@@ -74,6 +78,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testAddTable() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -89,6 +94,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteTable() throws Exception {
         mockMvc.perform(delete("/tables/1"))
                 .andExpect(status().isOk());

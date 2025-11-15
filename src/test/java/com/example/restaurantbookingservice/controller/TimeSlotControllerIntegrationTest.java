@@ -1,6 +1,5 @@
 package com.example.restaurantbookingservice.controller;
 
-import com.example.restaurantbookingservice.model.Booking;
 import com.example.restaurantbookingservice.model.ERole;
 import com.example.restaurantbookingservice.model.Restaurant;
 import com.example.restaurantbookingservice.model.RestaurantTable;
@@ -35,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class BookingControllerIntegrationTest {
+public class TimeSlotControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,13 +43,13 @@ public class BookingControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Autowired
+    private TimeSlotService timeSlotService;
+
+    @Autowired
     private RestaurantService restaurantService;
 
     @Autowired
     private RestaurantTableService restaurantTableService;
-
-    @Autowired
-    private TimeSlotService timeSlotService;
 
     @Autowired
     private UserRepository userRepository;
@@ -83,77 +82,74 @@ public class BookingControllerIntegrationTest {
         userRepository.save(adminUser);
     }
 
-    private Booking createBooking(TimeSlot timeSlot, User user, int numberOfPeople, String customerName, String customerPhone, String customerEmail) throws Exception {
-        Booking booking = new Booking(timeSlot, user, numberOfPeople, customerName, customerPhone, customerEmail);
-        String responseString = mockMvc.perform(post("/bookings")
-                        .with(user(user.getUsername()).roles(user.getRoles().iterator().next().getName().name()))
+    @Test
+    public void testGetAllTimeSlots() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        restaurantService.addRestaurant(restaurant);
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        restaurantTableService.addTable(table);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        timeSlotService.addTimeSlot(timeSlot);
+
+        mockMvc.perform(get("/timeslots").with(user(testUser.getUsername()).roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    public void testGetTimeSlotById() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        restaurantService.addRestaurant(restaurant);
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        restaurantTableService.addTable(table);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        TimeSlot savedTimeSlot = timeSlotService.addTimeSlot(timeSlot);
+
+        mockMvc.perform(get("/timeslots/" + savedTimeSlot.getId()).with(user(testUser.getUsername()).roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(savedTimeSlot.getId()));
+    }
+
+    @Test
+    public void testGetTimeSlotsByRestaurantTableId() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        restaurantService.addRestaurant(restaurant);
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        restaurantTableService.addTable(table);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        timeSlotService.addTimeSlot(timeSlot);
+
+        mockMvc.perform(get("/timeslots/table/" + table.getId()).with(user(testUser.getUsername()).roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    public void testAddTimeSlot() throws Exception {
+        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        restaurantService.addRestaurant(restaurant);
+        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        restaurantTableService.addTable(table);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+
+        mockMvc.perform(post("/timeslots")
+                        .with(user(adminUser.getUsername()).roles("ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(booking)))
+                        .content(objectMapper.writeValueAsString(timeSlot)))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(responseString, Booking.class);
+                .andExpect(jsonPath("$.id").exists());
     }
 
     @Test
-    public void testGetAllBookings() throws Exception {
+    public void testDeleteTimeSlot() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurantService.addRestaurant(restaurant);
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
         restaurantTableService.addTable(table);
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
+        TimeSlot savedTimeSlot = timeSlotService.addTimeSlot(timeSlot);
 
-        mockMvc.perform(get("/bookings").with(user(adminUser.getUsername()).roles("ADMIN")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].customerName").value("Customer 1"));
-    }
-
-    @Test
-    public void testGetBookingById() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
-        restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        Booking savedBooking = createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
-
-        mockMvc.perform(get("/bookings/" + savedBooking.getId()).with(user(testUser.getUsername()).roles("USER")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerName").value("Customer 1"));
-    }
-
-    @Test
-    public void testAddBooking() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
-        restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        Booking booking = new Booking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
-
-        mockMvc.perform(post("/bookings")
-                        .with(user(testUser.getUsername()).roles("USER"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(booking)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerName").value("Customer 1"));
-    }
-
-    @Test
-    public void testDeleteBooking() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
-        restaurantTableService.addTable(table);
-        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
-        timeSlotService.addTimeSlot(timeSlot);
-        Booking savedBooking = createBooking(timeSlot, testUser, 2, "Customer 1", "1234567890", "c1@email.com");
-
-        mockMvc.perform(delete("/bookings/" + savedBooking.getId()).with(user(testUser.getUsername()).roles("USER")))
+        mockMvc.perform(delete("/timeslots/" + savedTimeSlot.getId()).with(user(adminUser.getUsername()).roles("ADMIN")))
                 .andExpect(status().isOk());
     }
 }

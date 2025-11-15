@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -31,6 +32,7 @@ class RestaurantControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     void getAllRestaurants() throws Exception {
         Restaurant restaurant1 = new Restaurant("Restaurant 1", "Address 1", "1234567890", "r1@email.com");
         Restaurant restaurant2 = new Restaurant("Restaurant 2", "Address 2", "0987654321", "r2@email.com");
@@ -46,6 +48,7 @@ class RestaurantControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     void getRestaurantById() throws Exception {
         Restaurant restaurant = new Restaurant("Restaurant 1", "Address 1", "1234567890", "r1@email.com");
         when(restaurantService.getRestaurantById(1L)).thenReturn(restaurant);
@@ -56,6 +59,7 @@ class RestaurantControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void addRestaurant() throws Exception {
         Restaurant restaurant = new Restaurant("Restaurant 1", "Address 1", "1234567890", "r1@email.com");
         when(restaurantService.addRestaurant(restaurant)).thenReturn(restaurant);
@@ -67,6 +71,7 @@ class RestaurantControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteRestaurant() throws Exception {
         mockMvc.perform(delete("/restaurants/1"))
                 .andExpect(status().isOk());

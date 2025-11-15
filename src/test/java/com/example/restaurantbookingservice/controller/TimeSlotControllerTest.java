@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class TimeSlotControllerTest {
     private TimeSlotService timeSlotService;
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     public void testGetAllTimeSlots() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -45,6 +47,7 @@ public class TimeSlotControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     public void testGetTimeSlotById() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -59,6 +62,7 @@ public class TimeSlotControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = {"USER", "ADMIN"})
     public void testGetTimeSlotsByRestaurantTableId() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -75,6 +79,7 @@ public class TimeSlotControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testAddTimeSlot() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -91,6 +96,7 @@ public class TimeSlotControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteTimeSlot() throws Exception {
         mockMvc.perform(delete("/timeslots/1"))
                 .andExpect(status().isOk());

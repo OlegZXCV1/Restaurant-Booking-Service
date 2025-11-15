@@ -3,6 +3,7 @@ package com.example.restaurantbookingservice.controller;
 import com.example.restaurantbookingservice.model.TimeSlot;
 import com.example.restaurantbookingservice.service.TimeSlotService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,26 +16,31 @@ public class TimeSlotController {
     private TimeSlotService timeSlotService;
 
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<TimeSlot> getAllTimeSlots() {
         return timeSlotService.getAllTimeSlots();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public TimeSlot getTimeSlotById(@PathVariable Long id) {
         return timeSlotService.getTimeSlotById(id);
     }
 
     @GetMapping("/table/{restaurantTableId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<TimeSlot> getTimeSlotsByRestaurantTableId(@PathVariable Long restaurantTableId) {
         return timeSlotService.getTimeSlotsByRestaurantTableId(restaurantTableId);
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public TimeSlot addTimeSlot(@RequestBody TimeSlot timeSlot) {
         return timeSlotService.addTimeSlot(timeSlot);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteTimeSlot(@PathVariable Long id) {
         timeSlotService.deleteTimeSlot(id);
     }
