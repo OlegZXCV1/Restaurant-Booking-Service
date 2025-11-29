@@ -19,6 +19,10 @@ public class Booking {
     @JoinColumn(name = "timeslot_id")
     private TimeSlot timeSlot;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     private int numberOfPeople;
     private String customerName;
     private String customerPhone;
@@ -27,8 +31,9 @@ public class Booking {
     public Booking() {
     }
 
-    public Booking(TimeSlot timeSlot, int numberOfPeople, String customerName, String customerPhone, String customerEmail) {
+    public Booking(TimeSlot timeSlot, User user, int numberOfPeople, String customerName, String customerPhone, String customerEmail) {
         this.timeSlot = timeSlot;
+        this.user = user;
         this.numberOfPeople = numberOfPeople;
         this.customerName = customerName;
         this.customerPhone = customerPhone;
@@ -49,6 +54,14 @@ public class Booking {
 
     public void setTimeSlot(TimeSlot timeSlot) {
         this.timeSlot = timeSlot;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public int getNumberOfPeople() {

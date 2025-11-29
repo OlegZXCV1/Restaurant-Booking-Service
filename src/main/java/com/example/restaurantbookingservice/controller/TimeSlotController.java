@@ -16,16 +16,19 @@ public class TimeSlotController {
     private TimeSlotService timeSlotService;
 
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<TimeSlot> getAllTimeSlots() {
         return timeSlotService.getAllTimeSlots();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public TimeSlot getTimeSlotById(@PathVariable Long id) {
         return timeSlotService.getTimeSlotById(id);
     }
 
     @GetMapping("/table/{restaurantTableId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<TimeSlot> getTimeSlotsByRestaurantTableId(@PathVariable Long restaurantTableId) {
         return timeSlotService.getTimeSlotsByRestaurantTableId(restaurantTableId);
     }

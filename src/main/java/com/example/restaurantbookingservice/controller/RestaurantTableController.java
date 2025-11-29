@@ -16,16 +16,19 @@ public class RestaurantTableController {
     private RestaurantTableService restaurantTableService;
 
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<RestaurantTable> getAllTables() {
         return restaurantTableService.getAllTables();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public RestaurantTable getTableById(@PathVariable Long id) {
         return restaurantTableService.getTableById(id);
     }
 
     @GetMapping("/restaurant/{restaurantId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public List<RestaurantTable> getTablesByRestaurantId(@PathVariable Long restaurantId) {
         return restaurantTableService.getTablesByRestaurantId(restaurantId);
     }
