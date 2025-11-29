@@ -1,7 +1,7 @@
 package com.example.restaurantbookingservice.controller;
 
-import com.example.restaurantbookingservice.model.Booking;
-import com.example.restaurantbookingservice.model.Restaurant;
+import com.example.restaurantbookingservice.dto.BookingDto;
+import com.example.restaurantbookingservice.dto.RestaurantDto;
 import com.example.restaurantbookingservice.model.RestaurantTable;
 import com.example.restaurantbookingservice.model.TimeSlot;
 import com.example.restaurantbookingservice.service.BookingService;
@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,16 +48,24 @@ public class BookingControllerIntegrationTest {
     @Autowired
     private TimeSlotService timeSlotService;
 
+    @Autowired
+    private com.example.restaurantbookingservice.repository.RestaurantRepository restaurantRepository;
+
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testGetAllBookings() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
+        RestaurantTable table = new RestaurantTable(1, 4, null);
+        table.setRestaurant(restaurantRepository.findById(savedRestaurant.getId()).get());
         restaurantTableService.addTable(table);
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         timeSlotService.addTimeSlot(timeSlot);
-        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
-        bookingService.addBooking(booking);
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setTimeSlotId(timeSlot.getId());
+        bookingDto.setCustomerName("Customer 1");
+        bookingService.addBooking(bookingDto);
 
         mockMvc.perform(get("/bookings"))
                 .andExpect(status().isOk())
@@ -65,15 +74,20 @@ public class BookingControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetBookingById() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
+        RestaurantTable table = new RestaurantTable(1, 4, null);
+        table.setRestaurant(restaurantRepository.findById(savedRestaurant.getId()).get());
         restaurantTableService.addTable(table);
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         timeSlotService.addTimeSlot(timeSlot);
-        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
-        Booking savedBooking = bookingService.addBooking(booking);
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setTimeSlotId(timeSlot.getId());
+        bookingDto.setCustomerName("Customer 1");
+        BookingDto savedBooking = bookingService.addBooking(bookingDto);
 
         mockMvc.perform(get("/bookings/" + savedBooking.getId()))
                 .andExpect(status().isOk())
@@ -81,34 +95,64 @@ public class BookingControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     public void testAddBooking() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
+        RestaurantTable table = new RestaurantTable(1, 4, null);
+        table.setRestaurant(restaurantRepository.findById(savedRestaurant.getId()).get());
         restaurantTableService.addTable(table);
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         timeSlotService.addTimeSlot(timeSlot);
-        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setTimeSlotId(timeSlot.getId());
+        bookingDto.setCustomerName("Customer 1");
 
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(booking)))
+                        .content(objectMapper.writeValueAsString(bookingDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.customerName").value("Customer 1"));
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteBooking() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
-        RestaurantTable table = new RestaurantTable(1, 4, restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
+        RestaurantTable table = new RestaurantTable(1, 4, null);
+        table.setRestaurant(restaurantRepository.findById(savedRestaurant.getId()).get());
         restaurantTableService.addTable(table);
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         timeSlotService.addTimeSlot(timeSlot);
-        Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
-        Booking savedBooking = bookingService.addBooking(booking);
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setTimeSlotId(timeSlot.getId());
+        bookingDto.setCustomerName("Customer 1");
+        BookingDto savedBooking = bookingService.addBooking(bookingDto);
 
         mockMvc.perform(delete("/bookings/" + savedBooking.getId()))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testDeleteBooking_asUser_isForbidden() throws Exception {
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
+        RestaurantTable table = new RestaurantTable(1, 4, null);
+        table.setRestaurant(restaurantRepository.findById(savedRestaurant.getId()).get());
+        restaurantTableService.addTable(table);
+        TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
+        timeSlotService.addTimeSlot(timeSlot);
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setTimeSlotId(timeSlot.getId());
+        bookingDto.setCustomerName("Customer 1");
+        BookingDto savedBooking = bookingService.addBooking(bookingDto);
+
+        mockMvc.perform(delete("/bookings/" + savedBooking.getId()))
+                .andExpect(status().isForbidden());
     }
 }

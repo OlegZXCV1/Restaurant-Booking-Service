@@ -1,15 +1,31 @@
 package com.example.restaurantbookingservice.controller;
 
+import com.example.restaurantbookingservice.config.SecurityConfig;
 import com.example.restaurantbookingservice.model.Restaurant;
 import com.example.restaurantbookingservice.model.RestaurantTable;
+import com.example.restaurantbookingservice.security.JwtAuthenticationEntryPoint;
+import com.example.restaurantbookingservice.security.JwtRequestFilter;
+import com.example.restaurantbookingservice.security.JwtTokenProvider;
 import com.example.restaurantbookingservice.service.RestaurantTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RestaurantTableController.class)
+@Import(SecurityConfig.class)
 public class RestaurantTableControllerTest {
 
     @Autowired
@@ -27,7 +44,35 @@ public class RestaurantTableControllerTest {
     @MockBean
     private RestaurantTableService restaurantTableService;
 
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        public UserDetailsService userDetailsService() {
+            return new InMemoryUserDetailsManager(
+                    User.withUsername("user").password("password").roles("USER").build(),
+                    User.withUsername("admin").password("password").roles("ADMIN").build()
+            );
+        }
+
+        @Bean
+        public JwtRequestFilter jwtRequestFilter() {
+            return new JwtRequestFilter() {
+                @Override
+                protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+                    chain.doFilter(request, response);
+                }
+            };
+        }
+    }
+
     @Test
+    @WithMockUser
     public void testGetAllTables() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table1 = new RestaurantTable(1, 4, restaurant);
@@ -44,6 +89,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetTableById() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -57,6 +103,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetTablesByRestaurantId() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         restaurant.setId(1L);
@@ -74,6 +121,7 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testAddTable() throws Exception {
         Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
@@ -89,8 +137,25 @@ public class RestaurantTableControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteTable() throws Exception {
         mockMvc.perform(delete("/tables/1"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testAddTable_asUser_isForbidden() throws Exception {
+        mockMvc.perform(post("/tables")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tableNumber\": 1, \"capacity\": 4, \"restaurant\": {\"id\": 1}}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testDeleteTable_asUser_isForbidden() throws Exception {
+        mockMvc.perform(delete("/tables/1"))
+                .andExpect(status().isForbidden());
     }
 }

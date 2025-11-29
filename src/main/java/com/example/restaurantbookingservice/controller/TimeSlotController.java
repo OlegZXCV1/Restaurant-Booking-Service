@@ -3,6 +3,7 @@ package com.example.restaurantbookingservice.controller;
 import com.example.restaurantbookingservice.model.TimeSlot;
 import com.example.restaurantbookingservice.service.TimeSlotService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,11 +31,13 @@ public class TimeSlotController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public TimeSlot addTimeSlot(@RequestBody TimeSlot timeSlot) {
         return timeSlotService.addTimeSlot(timeSlot);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteTimeSlot(@PathVariable Long id) {
         timeSlotService.deleteTimeSlot(id);
     }

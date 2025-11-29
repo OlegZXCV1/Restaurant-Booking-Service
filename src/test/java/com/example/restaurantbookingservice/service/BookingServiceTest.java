@@ -1,5 +1,7 @@
 package com.example.restaurantbookingservice.service;
 
+import com.example.restaurantbookingservice.dto.BookingDto;
+import com.example.restaurantbookingservice.mapper.BookingMapper;
 import com.example.restaurantbookingservice.model.Booking;
 import com.example.restaurantbookingservice.model.Restaurant;
 import com.example.restaurantbookingservice.model.RestaurantTable;
@@ -29,6 +31,9 @@ class BookingServiceTest {
     @Mock
     BookingRepository bookingRepository;
 
+    @Mock
+    BookingMapper bookingMapper;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -42,10 +47,16 @@ class BookingServiceTest {
         Booking booking1 = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
         Booking booking2 = new Booking(timeSlot, 4, "Customer 2", "0987654321", "c2@email.com");
         List<Booking> bookings = Arrays.asList(booking1, booking2);
+        BookingDto bookingDto1 = new BookingDto();
+        bookingDto1.setCustomerName("Customer 1");
+        BookingDto bookingDto2 = new BookingDto();
+        bookingDto2.setCustomerName("Customer 2");
 
         when(bookingRepository.findAll()).thenReturn(bookings);
+        when(bookingMapper.toDto(booking1)).thenReturn(bookingDto1);
+        when(bookingMapper.toDto(booking2)).thenReturn(bookingDto2);
 
-        List<Booking> result = bookingService.getAllBookings();
+        List<BookingDto> result = bookingService.getAllBookings();
 
         assertEquals(2, result.size());
         verify(bookingRepository, times(1)).findAll();
@@ -57,9 +68,13 @@ class BookingServiceTest {
         RestaurantTable table = new RestaurantTable(1, 4, restaurant);
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setCustomerName("Customer 1");
 
-        Booking result = bookingService.getBookingById(1L);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingMapper.toDto(booking)).thenReturn(bookingDto);
+
+        BookingDto result = bookingService.getBookingById(1L);
 
         assertEquals("Customer 1", result.getCustomerName());
         verify(bookingRepository, times(1)).findById(1L);
@@ -74,10 +89,16 @@ class BookingServiceTest {
         Booking booking1 = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
         Booking booking2 = new Booking(timeSlot, 4, "Customer 2", "0987654321", "c2@email.com");
         List<Booking> bookings = Arrays.asList(booking1, booking2);
+        BookingDto bookingDto1 = new BookingDto();
+        bookingDto1.setCustomerName("Customer 1");
+        BookingDto bookingDto2 = new BookingDto();
+        bookingDto2.setCustomerName("Customer 2");
 
         when(bookingRepository.findByTimeSlotId(1L)).thenReturn(bookings);
+        when(bookingMapper.toDto(booking1)).thenReturn(bookingDto1);
+        when(bookingMapper.toDto(booking2)).thenReturn(bookingDto2);
 
-        List<Booking> result = bookingService.getBookingsByTimeSlotId(1L);
+        List<BookingDto> result = bookingService.getBookingsByTimeSlotId(1L);
 
         assertEquals(2, result.size());
         verify(bookingRepository, times(1)).findByTimeSlotId(1L);
@@ -90,11 +111,16 @@ class BookingServiceTest {
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         timeSlot.setId(1L);
         Booking booking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setTimeSlotId(1L);
+        bookingDto.setCustomerName("Customer 1");
 
         when(bookingRepository.findByTimeSlotId(1L)).thenReturn(Collections.emptyList());
+        when(bookingMapper.toEntity(bookingDto)).thenReturn(booking);
         when(bookingRepository.save(booking)).thenReturn(booking);
+        when(bookingMapper.toDto(booking)).thenReturn(bookingDto);
 
-        Booking result = bookingService.addBooking(booking);
+        BookingDto result = bookingService.addBooking(bookingDto);
 
         assertEquals("Customer 1", result.getCustomerName());
         verify(bookingRepository, times(1)).findByTimeSlotId(1L);
@@ -108,15 +134,16 @@ class BookingServiceTest {
         TimeSlot timeSlot = new TimeSlot(LocalDateTime.now(), LocalDateTime.now().plusHours(2), table);
         timeSlot.setId(1L);
         Booking existingBooking = new Booking(timeSlot, 2, "Customer 1", "1234567890", "c1@email.com");
-        Booking newBooking = new Booking(timeSlot, 4, "Customer 2", "0987654321", "c2@email.com");
+        BookingDto newBookingDto = new BookingDto();
+        newBookingDto.setTimeSlotId(1L);
 
         when(bookingRepository.findByTimeSlotId(1L)).thenReturn(Arrays.asList(existingBooking));
 
-        Booking result = bookingService.addBooking(newBooking);
+        BookingDto result = bookingService.addBooking(newBookingDto);
 
         assertNull(result);
         verify(bookingRepository, times(1)).findByTimeSlotId(1L);
-        verify(bookingRepository, never()).save(newBooking);
+        verify(bookingRepository, never()).save(any(Booking.class));
     }
 
     @Test

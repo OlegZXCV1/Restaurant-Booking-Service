@@ -1,7 +1,8 @@
 package com.example.restaurantbookingservice.controller;
 
-import com.example.restaurantbookingservice.model.Restaurant;
+import com.example.restaurantbookingservice.dto.RestaurantDto;
 import com.example.restaurantbookingservice.service.RestaurantService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -31,9 +32,11 @@ public class RestaurantControllerIntegrationTest {
     private RestaurantService restaurantService;
 
     @Test
+    @WithMockUser
     public void testGetAllRestaurants() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        restaurantService.addRestaurant(restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        restaurantService.addRestaurant(restaurantDto);
 
         mockMvc.perform(get("/restaurants"))
                 .andExpect(status().isOk())
@@ -42,9 +45,11 @@ public class RestaurantControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetRestaurantById() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        Restaurant savedRestaurant = restaurantService.addRestaurant(restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
 
         mockMvc.perform(get("/restaurants/" + savedRestaurant.getId()))
                 .andExpect(status().isOk())
@@ -52,22 +57,49 @@ public class RestaurantControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void testAddRestaurant() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
 
         mockMvc.perform(post("/restaurants")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(restaurant)))
+                        .content(objectMapper.writeValueAsString(restaurantDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test Restaurant"));
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    public void testAddRestaurant_asUser_isForbidden() throws Exception {
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+
+        mockMvc.perform(post("/restaurants")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(restaurantDto)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteRestaurant() throws Exception {
-        Restaurant restaurant = new Restaurant("Test Restaurant", "Test Address", "1234567890", "test@test.com");
-        Restaurant savedRestaurant = restaurantService.addRestaurant(restaurant);
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
 
         mockMvc.perform(delete("/restaurants/" + savedRestaurant.getId()))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void testDeleteRestaurant_asUser_isForbidden() throws Exception {
+        RestaurantDto restaurantDto = new RestaurantDto();
+        restaurantDto.setName("Test Restaurant");
+        RestaurantDto savedRestaurant = restaurantService.addRestaurant(restaurantDto);
+
+        mockMvc.perform(delete("/restaurants/" + savedRestaurant.getId()))
+                .andExpect(status().isForbidden());
     }
 }
