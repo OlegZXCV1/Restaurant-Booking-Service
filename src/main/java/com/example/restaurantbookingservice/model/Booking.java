@@ -40,6 +40,10 @@ public class Booking {
         this.customerEmail = customerEmail;
     }
 
+    public Booking(TimeSlot timeSlot, int numberOfPeople, String customerName, String customerPhone, String customerEmail) {
+        this(timeSlot, null, numberOfPeople, customerName, customerPhone, customerEmail);
+    }
+
     public Long getId() {
         return id;
     }

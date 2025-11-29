@@ -36,6 +36,10 @@ public class RestaurantService {
         return restaurantMapper.toDto(restaurantRepository.save(restaurant));
     }
 
+    public RestaurantDto addRestaurant(Restaurant restaurant) {
+        return restaurantMapper.toDto(restaurantRepository.save(restaurant));
+    }
+
     public void deleteRestaurant(Long id) {
         restaurantRepository.deleteById(id);
     }

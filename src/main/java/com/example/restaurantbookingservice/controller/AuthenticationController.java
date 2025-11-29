@@ -3,8 +3,10 @@ package com.example.restaurantbookingservice.controller;
 import com.example.restaurantbookingservice.dto.AuthenticationRequestDto;
 import com.example.restaurantbookingservice.dto.AuthenticationResponseDto;
 import com.example.restaurantbookingservice.dto.RegistrationRequestDto;
+import com.example.restaurantbookingservice.model.ERole;
 import com.example.restaurantbookingservice.model.Role;
 import com.example.restaurantbookingservice.model.User;
+import com.example.restaurantbookingservice.repository.RoleRepository;
 import com.example.restaurantbookingservice.repository.UserRepository;
 import com.example.restaurantbookingservice.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class AuthenticationController {
     private UserDetailsService userDetailsService;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -47,7 +52,10 @@ public class AuthenticationController {
         User user = new User();
         user.setUsername(registrationRequest.getUsername());
         user.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
-        user.setRoles(Set.of(Role.USER));
+
+        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                .orElseGet(() -> roleRepository.save(new Role(ERole.ROLE_USER)));
+        user.setRoles(Set.of(userRole));
 
         userRepository.save(user);
 
