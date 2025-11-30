@@ -1,13 +1,13 @@
 # Restaurant Booking Service
 
-This is a Spring Boot application for managing restaurant bookings.
+This is a Spring Boot application that exposes a REST API for restaurants, restaurant tables, time slots, and bookings on top of JWT-secured endpoints.
 
-## Features
+## Highlights
 
-- Manage Restaurants (CRUD)
-- Manage Bookings (CRUD)
-- H2 In-memory Database
-- Swagger UI for API documentation
+- Modular `controller` / `service` / `repository` layers under `com.example.restaurantbookingservice`
+- Security handled through JWT utilities and custom `UserDetailsServiceImpl`
+- H2 used in `dev`/`test` profiles, Postgres target in `prod` with docker compose
+- Swagger / OpenAPI UI and SpringDoc configuration under `config`
 
 ## Getting Started
 
@@ -16,29 +16,53 @@ This is a Spring Boot application for managing restaurant bookings.
 - Java 17 or higher
 - Maven
 
-### Running the application
+### Getting started
 
-To build and run the application, navigate to the project root directory and execute the following command:
+1. Build and test the project locally:
 
-```bash
-./mvnw spring-boot:run
-```
+   ```bash
+   ./mvnw clean verify
+   ```
 
-The application will start on `http://localhost:8081`.
+2. Launch the app with the default `dev` profile (H2 + port 8081):
 
-### API Documentation (Swagger UI)
+   ```bash
+   ./mvnw spring-boot:run
+   ```
 
-Once the application is running, you can access the API documentation via Swagger UI at:
+3. For integration tests that hit a more complete context (Postgres, async flows):
 
-[http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
+   ```bash
+   ./mvnw test
+   ```
 
-### H2 Console
+4. When Postgres is required, start the container that matches `application-prod.properties`:
 
-The H2 in-memory database console can be accessed at:
+   ```bash
+   docker-compose up -d postgres
+   ```
 
-[http://localhost:8081/h2-console](http://localhost:8080/h2-console)
+   Then override the profile and JDBC URL via `SPRING_PROFILES_ACTIVE=prod` and `SPRING_DATASOURCE_URL`.
 
-Use the following credentials:
-- **JDBC URL:** `jdbc:h2:mem:testdb`
-- **User Name:** `sa`
-- **Password:** (leave blank)
+### Environment / profiles
+
+- `application.properties` punts to `dev` (H2 on 8081). `application-dev.properties` also targets H2, `application-test.properties` mirrors the test setup, and `application-prod.properties` points at Postgres (update credentials via env vars).
+- Spring Security profile `test-security` is used by controller slices; drop-down `@Profile` annotations in `config`/`security` toggle JWT vs. mock security in tests.
+
+### APIs & tooling
+
+- Swagger/OpenAPI UI: [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html) (enabled when running any web profile).
+- H2 console (dev/test): [http://localhost:8081/h2-console](http://localhost:8081/h2-console)
+  - JDBC URL: `jdbc:h2:mem:testdb`
+  - User: `sa`
+  - Password: (blank)
+
+### Hexagonal/Clean Architecture notes
+
+- Controllers live under `controller` and accept/return DTOs; services encapsulate business rules and rely on repositories (`adapter` layer) for persistence.
+- Security adapters (`JwtTokenProvider`, filters) live under `security` and `config` while DTO/mappers are contained in their own packages for clear responsibility.
+
+### Testing
+
+- Unit/integration tests live under `src/test/java/com/example/restaurantbookingservice` with matching packages; use `./mvnw test` before pushing.
+- Controller slices run with `@SpringBootTest` + `test-security` profile, so make sure no duplicate `UserDetailsService` beans exist (only `security.services.UserDetailsServiceImpl` should remain).
